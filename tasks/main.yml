@@ -43,7 +43,7 @@
   package:
     name: "{{ gitlab_package_name }}"
     state: present
-  async: "{{ ansible_check_mode | ternary(0, 3000) }}"
+  async: 3000
   poll: 5
   when: (gitlab_version is defined) and (gitlab_version|length > 0)
 
@@ -51,7 +51,7 @@
   package:
     name: "{{ gitlab_edition }}"
     state: latest
-  async: "{{ ansible_check_mode | ternary(0, 3000) }}"
+  async: 3000
   poll: 5
   when: (gitlab_version is not defined) or (gitlab_version|length == 0)
 
