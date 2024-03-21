@@ -97,8 +97,6 @@ registry_nginx['ssl_certificate'] = "{{ gitlab_registry_nginx_ssl_certificate }}
 registry_nginx['ssl_certificate_key'] = "{{ gitlab_registry_nginx_ssl_certificate_key }}"
 {% endif %}
 
-pages_external_url "{{ gitlab_pages_external_url }}"
-
 {% if gitlab_extra_settings is defined %}
 # Extra configuration
 {% for extra in gitlab_extra_settings %}
