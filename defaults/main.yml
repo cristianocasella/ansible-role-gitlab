@@ -83,3 +83,18 @@ gitlab_letsencrypt_auto_renew_day_of_month: "*/7"
 gitlab_letsencrypt_auto_renew: true
 
 gitlab_pages_external_url: "https://{{ gitlab_domain }}/"
+
+# Extra setting configuration.
+
+gitlab_extra_settings:
+  - gitlab_rails:
+      - key: "dependency_proxy_enabled"
+        value: "false"
+      - key: "env"
+        value:
+          GITLAB_LICENSE_MODE: "production"
+          CUSTOMER_PORTAL_URL: "https://customers.gitlab.com"
+          AI_GATEWAY_URL: "<path_to_your_ai_gateway>:<port>"
+  - gitlab_pages:
+      - key: "enable"
+        value: "true"
