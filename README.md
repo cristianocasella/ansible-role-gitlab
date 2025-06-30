@@ -1,8 +1,8 @@
 # Ansible Role: GitLab
 
-**Deprecated**: In September 2023, I deprecated this role as I am no longer maintaining any GitLab instances, and use Gitea instead for my personal work. Please consider forking this role or use someone else's GitLab role.
+This role is a fork of the original [Geerlingguy repo](https://github.com/geerlingguy/ansible-role-gitlab) that is no longer maintained.
 
-[![CI](https://github.com/geerlingguy/ansible-role-gitlab/workflows/CI/badge.svg?event=push)](https://github.com/geerlingguy/ansible-role-gitlab/actions?query=workflow%3ACI)
+Compared to the original role this fork support also the upgrade process.
 
 Installs GitLab, a Ruby-based front-end to Git, on any RedHat/CentOS or Debian/Ubuntu linux system.
 
@@ -187,6 +187,13 @@ None.
 
 MIT / BSD
 
+## Upgrade Notes
+
+### v18.0.0
+
+- `git_data_dirs` migration - The role managed itself this migration, it also add the `/repository` suffix now required, so no changes are required on the variables during the upgrade. [GitLab Ref](https://docs.gitlab.com/omnibus/settings/configuration/#migrating-from-git_data_dirs)
+
 ## Author Information
 
-This role was created in 2014 by [Jeff Geerling](http://jeffgeerling.com/), author of [Ansible for DevOps](http://ansiblefordevops.com/).
+This fork is maintained by [Cristiano Casella](https://cristianocasella.com).
+The original role was created in 2014 by [Jeff Geerling](http://jeffgeerling.com/), author of [Ansible for DevOps](http://ansiblefordevops.com/).
