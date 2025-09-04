@@ -315,4 +315,4 @@ def test_extra_settings_plain_and_non_string_values_unquoted():
         or "gitlab_rails['some_flag'] = true" in out
     )
     # nginx plain string (explicitly plain → unquoted)
-    assert "nginx['client_max_body_size'] = 100m" in out
+    assert "nginx['client_max_body_size'] = \"100m\"" in out
