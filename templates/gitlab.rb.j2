@@ -60,14 +60,11 @@ gitlab_rails['ldap_servers'] = {
     'bind_dn' => '{{ gitlab_ldap_bind_dn }}',
     'password' => '{{ gitlab_ldap_password }}',
     'base' => '{{ gitlab_ldap_base }}',
-    {% if gitlab_ldap_extra_settings is defined %}
-    # Extra configuration
-    {% for extra in gitlab_ldap_extra_settings %}
-    {% for kv in extra[setting] %}
+{% if gitlab_ldap_extra_settings is defined %}
+{% for kv in gitlab_ldap_extra_settings %}
     '{{ kv.key }}' => '{{ kv.value }}',
-    {% endfor %}
-    {% endfor %}
-    {% endif %}
+{% endfor %}
+{% endif %}
     'allow_username_or_email_login' => true
   }
 }
