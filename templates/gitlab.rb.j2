@@ -10,8 +10,12 @@ gitlab_rails['gitlab_default_theme'] = "{{ gitlab_default_theme }}"
 {% endif %}
 
 # Backup
+{% if gitlab_backup_path is defined %}
 gitlab_rails['backup_path'] = "{{ gitlab_backup_path }}"
+{% endif %}
+{% if gitlab_backup_keep_time is defined %}
 gitlab_rails['backup_keep_time'] = {{ gitlab_backup_keep_time }}
+{% endif %}
 
 # Email
 gitlab_rails['gitlab_email_enabled'] = {{ gitlab_email_enabled | lower }}
