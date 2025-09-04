@@ -5,7 +5,7 @@ external_url "{{ gitlab_external_url }}"
 {% if gitlab_time_zone is defined %}
 gitlab_rails['time_zone'] = "{{ gitlab_time_zone }}"
 {% endif %}
-{% if gitlab_time_zone is defined %}
+{% if gitlab_default_theme is defined %}
 gitlab_rails['gitlab_default_theme'] = "{{ gitlab_default_theme }}"
 {% endif %}
 
