@@ -35,6 +35,10 @@ gitlab_smtp_ca_file: "/etc/ssl/certs/ca-certificates.crt"
 gitlab_nginx_ssl_verify_client: ""
 gitlab_nginx_ssl_client_certificate: ""
 
+# SSL Self-signed Certificate Configuration.
+gitlab_create_self_signed_cert: true
+gitlab_self_signed_cert_subj: "/C=US/ST=Missouri/L=Saint Louis/O=IT/CN={{ gitlab_domain }}"
+
 # Probably best to leave this as the default, unless doing testing.
 gitlab_restart_handler_failed_when: 'gitlab_restart.rc != 0'
 
