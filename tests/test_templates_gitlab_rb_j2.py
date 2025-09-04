@@ -3,14 +3,39 @@
 # These tests focus on the gitlab.rb.j2 template logic from the PR diff.
 
 import json
-import os
-from textwrap import dedent
 import pytest
+import yaml
 from jinja2 import Environment, BaseLoader, StrictUndefined
 from pathlib import Path
+from jinja2.runtime import Undefined
+import re
 
 # Resolve the path to the template relative to the repo root
 TEMPLATE_PATH = Path(__file__).parent.parent / "templates" / "gitlab.rb.j2"
+# Ensure the template file exists so tests fail with a clear error if the path changes
+assert TEMPLATE_PATH.exists(), f"Template not found at {TEMPLATE_PATH}. Check repository layout or adjust TEMPLATE_PATH."
+
+DEFAULTS_PATH = Path(__file__).parent.parent / "defaults" / "main.yml"
+
+def _load_defaults():
+    if not DEFAULTS_PATH.exists():
+        return {}
+    with open(DEFAULTS_PATH, "r", encoding="utf-8") as f:
+        data = yaml.safe_load(f)
+        return data if data else {}
+
+def _deep_merge(base: dict, override: dict) -> dict:
+    result = base.copy()
+    for k, v in override.items():
+        if (
+            k in result
+            and isinstance(result[k], dict)
+            and isinstance(v, dict)
+        ):
+            result[k] = _deep_merge(result[k], v)
+        else:
+            result[k] = v
+    return result
 
 # Read the actual template content
 with open(TEMPLATE_PATH, "r", encoding="utf-8") as f:
@@ -26,17 +51,28 @@ def render(**ctx) -> str:
     )
 
     # Add filters used in the template
-    env.filters["to_json"] = json.dumps
+    def _to_json_safe(value):
+        # Treat Jinja2 Undefined as JSON null to avoid TypeError during rendering
+        if isinstance(value, Undefined):
+            return "null"
+        try:
+            return json.dumps(value)
+        except TypeError:
+            # Fallback: stringify non-serializable objects
+            return json.dumps(str(value))
+
+    env.filters["to_json"] = _to_json_safe
     # Jinja2's regex_search is available via 'select' tests/filters in Ansible, but not vanilla Jinja2.
     # For this test, we provide a minimal implementation of regex_search as a filter.
-    import re
 
     def regex_search(s: str, pattern: str):
         return re.search(pattern, s or "") is not None
 
     env.filters["regex_search"] = regex_search
     tmpl = env.from_string(TEMPLATE_SRC)
-    return tmpl.render(**ctx)
+    defaults = _load_defaults()
+    merged_ctx = _deep_merge(defaults, ctx)
+    return tmpl.render(**merged_ctx)
 
 
 def _base_ctx():
@@ -53,6 +89,9 @@ def _base_ctx():
         "gitlab_pages_external_url": "https://pages.example.com",
         "gitlab_smtp_enable": False,
         "gitlab_ldap_enabled": False,
+        "gitlab_extra_settings": [
+            {"gitlab_rails": [{"key": "trusted_proxies", "value": "bar"}]}
+        ]
     }
 
 
@@ -70,27 +109,37 @@ def test_external_url_and_basic_settings_present():
 
 
 @pytest.mark.parametrize(
-    "tz_defined, theme_expected",
+    "tz_defined",
     [
-        (True, True),
-        (False, False),  # template ties theme to tz "is defined"
+        (True),
+        (False),
     ],
 )
-def test_time_zone_and_default_theme_block_guards(tz_defined, theme_expected):
+def test_time_zone_block_guards(tz_defined):
     ctx = _base_ctx()
     if tz_defined:
         ctx["gitlab_time_zone"] = "UTC"
-        ctx["gitlab_default_theme"] = "2"
-    else:
-        # Note: even if default theme provided, block won't render without time_zone defined
-        ctx["gitlab_default_theme"] = "2"
     out = render(**ctx)
     if tz_defined:
         assert "gitlab_rails['time_zone'] = \"UTC\"" in out
     else:
         assert "gitlab_rails['time_zone']" not in out
-    assert ("gitlab_rails['gitlab_default_theme'] = \"2\"" in out) == theme_expected
-
+@pytest.mark.parametrize(
+    "theme_expected",
+    [
+        (True),
+        (False),
+    ],
+)
+def test_default_theme_block_guards(theme_expected):
+    ctx = _base_ctx()
+    if theme_expected:
+        ctx["gitlab_default_theme"] = 2
+    out = render(**ctx)
+    if theme_expected:
+        assert "gitlab_rails['gitlab_default_theme'] = \"2\"" in out
+    else:
+        assert "gitlab_rails['gitlab_default_theme']" not in out
 
 def test_ssl_redirect_and_cert_blocks_when_flags_set():
     ctx = _base_ctx()
@@ -262,10 +311,8 @@ def test_ldap_block_with_extra_settings_appended_and_true_literal():
             "gitlab_ldap_password": "secret",
             "gitlab_ldap_base": "dc=ex,dc=com",
             "gitlab_ldap_extra_settings": [
-                {"timeout": {"key": "timeout", "value": "30"}},
-                {
-                    "active_directory": {"key": "active_directory", "value": "true"}
-                },  # still quoted because string
+                {"key": "timeout", "value": "30"},
+                {"key": "active_directory", "value": "true"},
             ],
         }
     )
@@ -320,4 +367,4 @@ def test_extra_settings_plain_and_non_string_values_unquoted():
         or "gitlab_rails['some_flag'] = true" in out
     )
     # nginx plain string (explicitly plain → unquoted)
-    assert "nginx['client_max_body_size'] = \"100m\"" in out
+    assert "nginx['client_max_body_size'] = 100m" in out

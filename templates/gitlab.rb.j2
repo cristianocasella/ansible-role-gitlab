@@ -1,9 +1,23 @@
+# Global Settings
+
 # The URL through which GitLab will be accessed.
 external_url "{{ gitlab_external_url }}"
-
-# gitlab.yml configuration
+{% if gitlab_time_zone is defined %}
 gitlab_rails['time_zone'] = "{{ gitlab_time_zone }}"
+{% endif %}
+{% if gitlab_default_theme is defined %}
+gitlab_rails['gitlab_default_theme'] = "{{ gitlab_default_theme }}"
+{% endif %}
+
+# Backup
+{% if gitlab_backup_path is defined %}
+gitlab_rails['backup_path'] = "{{ gitlab_backup_path }}"
+{% endif %}
+{% if gitlab_backup_keep_time is defined %}
 gitlab_rails['backup_keep_time'] = {{ gitlab_backup_keep_time }}
+{% endif %}
+
+# Email
 gitlab_rails['gitlab_email_enabled'] = {{ gitlab_email_enabled | lower }}
 {% if gitlab_email_enabled %}
 gitlab_rails['gitlab_email_from'] = "{{ gitlab_email_from }}"
@@ -11,16 +25,16 @@ gitlab_rails['gitlab_email_display_name'] = "{{ gitlab_email_display_name }}"
 gitlab_rails['gitlab_email_reply_to'] = "{{ gitlab_email_reply_to }}"
 {% endif %}
 
-# Default Theme
-gitlab_rails['gitlab_default_theme'] = "{{ gitlab_default_theme }}"
-
-# Whether to redirect http to https.
+# SSL
+{% if gitlab_redirect_http_to_https is defined %}
 nginx['redirect_http_to_https'] = {{ gitlab_redirect_http_to_https | lower }}
+{% endif %}
+{% if gitlab_ssl_certificate is defined and gitlab_ssl_certificate_key is defined %}
 nginx['ssl_certificate'] = "{{ gitlab_ssl_certificate }}"
 nginx['ssl_certificate_key'] = "{{ gitlab_ssl_certificate_key }}"
-
+{% endif %}
+{% if gitlab_letsencrypt_enable is defined %}
 letsencrypt['enable'] = {{ gitlab_letsencrypt_enable | lower }}
-{% if gitlab_letsencrypt_enable %}
 letsencrypt['contact_emails'] = {{ gitlab_letsencrypt_contact_emails | to_json }}
 letsencrypt['auto_renew_hour'] = "{{ gitlab_letsencrypt_auto_renew_hour }}"
 letsencrypt['auto_renew_minute'] = "{{ gitlab_letsencrypt_auto_renew_minute }}"
@@ -43,7 +57,6 @@ gitaly['configuration'] = {
 {% endif %}
 
 # The directory where Gitlab backups will be stored
-gitlab_rails['backup_path'] = "{{ gitlab_backup_path }}"
 
 # For LDAP settings, with the multi-server support, for a single server, the template has been migrated and the same variables can be used.
 # For multiple server is suggested that extrasettings array approach is used
@@ -104,10 +117,10 @@ gitlab_rails['smtp_ca_file'] = '{{ gitlab_smtp_ca_file }}'
 {% endif %}
 
 # 2-way SSL Client Authentication.
-{% if gitlab_nginx_ssl_verify_client %}
+{% if gitlab_nginx_ssl_verify_client is defined %}
 nginx['ssl_verify_client'] = "{{ gitlab_nginx_ssl_verify_client }}"
 {% endif %}
-{% if gitlab_nginx_ssl_client_certificate %}
+{% if gitlab_nginx_ssl_client_certificate is defined %}
 nginx['ssl_client_certificate'] = "{{ gitlab_nginx_ssl_client_certificate }}"
 {% endif %}
 
