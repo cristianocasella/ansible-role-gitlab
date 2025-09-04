@@ -137,7 +137,7 @@ def test_default_theme_block_guards(theme_expected):
         ctx["gitlab_default_theme"] = 2
     out = render(**ctx)
     if theme_expected:
-        assert "gitlab_rails['gitlab_default_theme'] = 2" in out
+        assert "gitlab_rails['gitlab_default_theme'] = \"2\"" in out
     else:
         assert "gitlab_rails['gitlab_default_theme']" not in out
 
