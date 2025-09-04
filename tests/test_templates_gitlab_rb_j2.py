@@ -70,27 +70,37 @@ def test_external_url_and_basic_settings_present():
 
 
 @pytest.mark.parametrize(
-    "tz_defined, theme_expected",
+    "tz_defined",
     [
-        (True, True),
-        (False, False),  # template ties theme to tz "is defined"
+        (True),
+        (False),
     ],
 )
-def test_time_zone_and_default_theme_block_guards(tz_defined, theme_expected):
+def test_time_zone_block_guards(tz_defined):
     ctx = _base_ctx()
     if tz_defined:
         ctx["gitlab_time_zone"] = "UTC"
-        ctx["gitlab_default_theme"] = "2"
-    else:
-        # Note: even if default theme provided, block won't render without time_zone defined
-        ctx["gitlab_default_theme"] = "2"
     out = render(**ctx)
     if tz_defined:
         assert "gitlab_rails['time_zone'] = \"UTC\"" in out
     else:
         assert "gitlab_rails['time_zone']" not in out
-    assert ("gitlab_rails['gitlab_default_theme'] = \"2\"" in out) == theme_expected
-
+@pytest.mark.parametrize(
+    "theme_expected",
+    [
+        (True),
+        (False),
+    ],
+)
+def test_default_theme_block_guards(theme_expected):
+    ctx = _base_ctx()
+    if theme_expected:
+        ctx["gitlab_default_theme"] = "2"
+    out = render(**ctx)
+    if theme_expected:
+        assert "gitlab_rails['gitlab_default_theme'] = \"2\"" in out
+    else:
+        assert "gitlab_rails['gitlab_default_theme']" not in out
 
 def test_ssl_redirect_and_cert_blocks_when_flags_set():
     ctx = _base_ctx()
@@ -262,10 +272,8 @@ def test_ldap_block_with_extra_settings_appended_and_true_literal():
             "gitlab_ldap_password": "secret",
             "gitlab_ldap_base": "dc=ex,dc=com",
             "gitlab_ldap_extra_settings": [
-                {"timeout": {"key": "timeout", "value": "30"}},
-                {
-                    "active_directory": {"key": "active_directory", "value": "true"}
-                },  # still quoted because string
+                {"key": "timeout", "value": "30"},
+                {"key": "active_directory", "value": "true"},
             ],
         }
     )
@@ -320,4 +328,4 @@ def test_extra_settings_plain_and_non_string_values_unquoted():
         or "gitlab_rails['some_flag'] = true" in out
     )
     # nginx plain string (explicitly plain → unquoted)
-    assert "nginx['client_max_body_size'] = \"100m\"" in out
+    assert "nginx['client_max_body_size'] = 100m" in out

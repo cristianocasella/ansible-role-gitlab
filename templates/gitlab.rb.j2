@@ -31,7 +31,7 @@ nginx['ssl_certificate'] = "{{ gitlab_ssl_certificate }}"
 {% if gitlab_ssl_certificate_key is defined %}
 nginx['ssl_certificate_key'] = "{{ gitlab_ssl_certificate_key }}"
 {% endif %}
-{% if gitlab_letncrypt_enable is defined %}
+{% if gitlab_letsencrypt_enable is defined %}
 letsencrypt['enable'] = {{ gitlab_letsencrypt_enable | lower }}
 letsencrypt['contact_emails'] = {{ gitlab_letsencrypt_contact_emails | to_json }}
 letsencrypt['auto_renew_hour'] = "{{ gitlab_letsencrypt_auto_renew_hour }}"
