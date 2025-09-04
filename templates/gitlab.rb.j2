@@ -25,10 +25,8 @@ gitlab_rails['gitlab_email_reply_to'] = "{{ gitlab_email_reply_to }}"
 {% if gitlab_redirect_http_to_https %}
 nginx['redirect_http_to_https'] = {{ gitlab_redirect_http_to_https | lower }}
 {% endif %}
-{% if gitlab_ssl_certificate is defined %}
+{% if gitlab_ssl_certificate is defined and gitlab_ssl_certificate_key is defined %}
 nginx['ssl_certificate'] = "{{ gitlab_ssl_certificate }}"
-{% endif %}
-{% if gitlab_ssl_certificate_key is defined %}
 nginx['ssl_certificate_key'] = "{{ gitlab_ssl_certificate_key }}"
 {% endif %}
 {% if gitlab_letsencrypt_enable is defined %}
