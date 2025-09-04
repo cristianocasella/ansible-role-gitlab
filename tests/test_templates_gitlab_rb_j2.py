@@ -6,7 +6,7 @@ import json
 import os
 from textwrap import dedent
 import pytest
-from jinja2 import Environment, BaseLoader
+from jinja2 import Environment, BaseLoader, StrictUndefined
 from pathlib import Path
 
 # Resolve the path to the template relative to the repo root
@@ -18,8 +18,13 @@ with open(TEMPLATE_PATH, "r", encoding="utf-8") as f:
 
 def render(**ctx) -> str:
     env = Environment(
-        loader=BaseLoader(), autoescape=True, trim_blocks=False, lstrip_blocks=False
+        loader=BaseLoader(),
+        autoescape=False,
+        undefined=StrictUndefined,
+        trim_blocks=False,
+        lstrip_blocks=False,
     )
+
     # Add filters used in the template
     env.filters["to_json"] = json.dumps
     # Jinja2's regex_search is available via 'select' tests/filters in Ansible, but not vanilla Jinja2.
