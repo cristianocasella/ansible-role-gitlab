@@ -1,11 +1,10 @@
 ---
 # General config.
 gitlab_domain: gitlab
-gitlab_external_url: "https://{{ gitlab_domain }}/"
+gitlab_external_url: "https://{{ gitlab_domain }}"
 gitlab_git_data_dir: "/var/opt/gitlab/git-data"
 gitlab_edition: "gitlab-ce"
 gitlab_version: ''
-gitlab_backup_path: "/var/opt/gitlab/backups"
 gitlab_config_template: "gitlab.rb.j2"
 
 # LDAP Configuration.
@@ -48,10 +47,7 @@ gitlab_dependencies:
   - tzdata
 
 # Optional settings.
-gitlab_time_zone: "UTC"
-gitlab_backup_keep_time: "604800"
 gitlab_download_validate_certs: true
-gitlab_default_theme: '2'
 
 # Email configuration.
 gitlab_email_enabled: false

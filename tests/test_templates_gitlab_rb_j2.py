@@ -3,14 +3,39 @@
 # These tests focus on the gitlab.rb.j2 template logic from the PR diff.
 
 import json
-import os
-from textwrap import dedent
 import pytest
+import yaml
 from jinja2 import Environment, BaseLoader, StrictUndefined
 from pathlib import Path
+from jinja2.runtime import Undefined
+import re
 
 # Resolve the path to the template relative to the repo root
 TEMPLATE_PATH = Path(__file__).parent.parent / "templates" / "gitlab.rb.j2"
+# Ensure the template file exists so tests fail with a clear error if the path changes
+assert TEMPLATE_PATH.exists(), f"Template not found at {TEMPLATE_PATH}. Check repository layout or adjust TEMPLATE_PATH."
+
+DEFAULTS_PATH = Path(__file__).parent.parent / "defaults" / "main.yml"
+
+def _load_defaults():
+    if not DEFAULTS_PATH.exists():
+        return {}
+    with open(DEFAULTS_PATH, "r", encoding="utf-8") as f:
+        data = yaml.safe_load(f)
+        return data if data else {}
+
+def _deep_merge(base: dict, override: dict) -> dict:
+    result = base.copy()
+    for k, v in override.items():
+        if (
+            k in result
+            and isinstance(result[k], dict)
+            and isinstance(v, dict)
+        ):
+            result[k] = _deep_merge(result[k], v)
+        else:
+            result[k] = v
+    return result
 
 # Read the actual template content
 with open(TEMPLATE_PATH, "r", encoding="utf-8") as f:
@@ -26,17 +51,28 @@ def render(**ctx) -> str:
     )
 
     # Add filters used in the template
-    env.filters["to_json"] = json.dumps
+    def _to_json_safe(value):
+        # Treat Jinja2 Undefined as JSON null to avoid TypeError during rendering
+        if isinstance(value, Undefined):
+            return "null"
+        try:
+            return json.dumps(value)
+        except TypeError:
+            # Fallback: stringify non-serializable objects
+            return json.dumps(str(value))
+
+    env.filters["to_json"] = _to_json_safe
     # Jinja2's regex_search is available via 'select' tests/filters in Ansible, but not vanilla Jinja2.
     # For this test, we provide a minimal implementation of regex_search as a filter.
-    import re
 
     def regex_search(s: str, pattern: str):
         return re.search(pattern, s or "") is not None
 
     env.filters["regex_search"] = regex_search
     tmpl = env.from_string(TEMPLATE_SRC)
-    return tmpl.render(**ctx)
+    defaults = _load_defaults()
+    merged_ctx = _deep_merge(defaults, ctx)
+    return tmpl.render(**merged_ctx)
 
 
 def _base_ctx():
@@ -53,6 +89,9 @@ def _base_ctx():
         "gitlab_pages_external_url": "https://pages.example.com",
         "gitlab_smtp_enable": False,
         "gitlab_ldap_enabled": False,
+        "gitlab_extra_settings": [
+            {"gitlab_rails": [{"key": "trusted_proxies", "value": "bar"}]}
+        ]
     }
 
 
